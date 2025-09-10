@@ -9,7 +9,8 @@ from app.ai_helpers import (
     suggest_story_points,
     extract_subtasks,
     score_story_health,
-    suggest_starter_code
+    suggest_starter_code,
+    generate_response
 )
 
 st.set_page_config(page_title="SmartUserStory AI", layout="wide")
@@ -28,14 +29,21 @@ with st.form("user_story_form"):
 
 if submitted:
     st.success("AI suggestions ready!")
-
+    response_dict = generate_response(title, description, acceptance_criteria)
+    story_points = response_dict['story points']
+    subtasks = response_dict['sub tasks']
+    health = response_dict['user story rating']
+    code_suggestions = response_dict['useful code snippets']
+    health_explanation = response_dict['rating reasoning']
     # AI logic, using backend helpers
-    story_points = suggest_story_points(title, description, acceptance_criteria)
-    subtasks = extract_subtasks(title, description, acceptance_criteria)
-    health, health_explanation = score_story_health(title, description, acceptance_criteria)
-    code_suggestions = suggest_starter_code(subtasks)
+    # story_points = suggest_story_points(title, description, acceptance_criteria)
+    # subtasks = extract_subtasks(title, description, acceptance_criteria)
+    # health, health_explanation = score_story_health(title, description, acceptance_criteria)
+    # code_suggestions = suggest_starter_code(subtasks)
 
     st.header("AI Recommendations")
+    st.subheader("Suggested userstory description")
+    st.write(response_dict['improved user story description'])
     st.subheader("Story Points Estimate")
     st.write(f"**Estimated Story Points:** {story_points}")
 
@@ -46,9 +54,10 @@ if submitted:
     st.write(f"**{health}** — {health_explanation}")
 
     st.subheader("Starter Code / Commands")
-    for task, code in code_suggestions.items():
-        st.markdown(f"**{task}**")
-        st.code(code, language="python" if "python" in code.lower() else "bash")
+    st.code(f"**Useful code snippets:** {code_suggestions}")
+    # for task, code in code_suggestions.items():
+    #     st.markdown(f"**{task}**")
+    #     st.code(code, language="python" if "python" in code.lower() else "bash")
 
 st.markdown("---")
 st.caption("Demo • Streamlit + open source models • 2025")

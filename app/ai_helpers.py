@@ -1,6 +1,76 @@
 from app.templates import STARTER_TEMPLATES
-
+from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+import ast
+import re
 # --- BASIC DEMO LOGIC ---
+import json
+import os
+
+# Go up one directory from /app to project root, then into /config
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "..", "config", "config.json")
+
+# Normalize the path so it works cross-platform
+CONFIG_PATH = os.path.normpath(CONFIG_PATH)
+
+with open(CONFIG_PATH, "r") as f:
+    config = json.load(f)
+
+# Now you can access values
+API_KEY = config.get("api_key")
+MODEL_NAME = config.get("model_name")
+BASE_URL = config.get("base_url")
+llm = ChatOpenAI(
+    openai_api_base=BASE_URL,
+    openai_api_key=API_KEY,
+    model_name=MODEL_NAME,
+    max_tokens=1000,
+    temperature=0.7,
+    top_p=0.9,
+    frequency_penalty=0.2
+)
+
+def generate_response(title, description, acceptance_criteria):
+    user_input = f"Userstory title: {title}, Userstory description: {description}, Acceptance criteria: {acceptance_criteria}"
+    system_prompt = """You are an assistant that helps refine and break down user stories for agile development. 
+    Your task is to carefully read a user story (title, description, and acceptance criteria) and then produce a structured response.
+
+    Follow these steps:
+    1. Understand the details of the user story based on the given title, description, and acceptance criteria.
+    2. Rate the user story on its clarity, completeness, and level of detail. The rating must be a score from 0 to 10.
+    3. Provide a short reasoning (2-3 sentences) that explains why you gave this rating.
+    4. Estimate the number of story points for the user story. The number must be an integer and should reflect its complexity.
+    5. Rewrite and improve the user story description using the given title, description, and acceptance criteria.
+    6. Generate a list of high-value sub-tasks needed to complete the user story. The number of sub-tasks should depend on the story’s complexity.
+    7. Decide whether the user story requires coding. If yes, provide a few useful, high-level helper code snippets relevant to completing the story. If no, say there is no code for this userstory.
+
+    Note: Response Format (must strictly follow this dictionary structure, with no extra text):
+    {0}"""
+    response_format = '''{{
+    'user story rating': <integer between 0 and 10>,
+    'rating reasoning': '<2-3 sentence explanation>',
+    'story points': <integer>,
+    'improved user story description': '<rewritten description>',
+    'sub tasks': ["<sub task 1>", "<sub task 2>", ...],
+    'useful code snippets': """<multi-line string of code snippets>"""
+    }}'''
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt.format(response_format)),
+        ("user", "{input}")
+    ])
+
+    chain = prompt | llm
+    response = chain.invoke({"input": user_input}).content
+
+
+    match = re.search(r"\{(.*)\}", response, re.DOTALL)
+    if match:
+        result = "{" + match.group(1) + "}"
+    print(result)
+
+    response_dict = ast.literal_eval(result)
+    return response_dict
 
 def suggest_story_points(title, description, acceptance_criteria):
     """Very simple heuristic: Longer stories => higher points"""
