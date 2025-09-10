@@ -1,5 +1,5 @@
 {
     "model_name" : "meta-llama/llama-3.1-405b-instruct:free",
-    "api_key" : "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",
+    "api_key" : "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",
     "base_url" : "https://openrouter.ai/api/v1"
 }
