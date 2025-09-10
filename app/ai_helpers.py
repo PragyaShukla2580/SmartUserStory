@@ -30,15 +30,6 @@ llm = ChatOpenAI(
     frequency_penalty=0.2
 )
 
-# llm = ChatOpenAI(
-#     openai_api_base="https://openrouter.ai/api/v1",  # Ensure you're using the correct API base URL
-#     openai_api_key="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",  # Replace with your actual OpenRouter API key
-#     model_name="meta-llama/llama-3.1-405b-instruct:free",
-#     max_tokens=1000,
-#     temperature=0.7,
-#     top_p=0.9,
-#     frequency_penalty=0.2
-# )
 def generate_response(title, description, acceptance_criteria):
     user_input = f"Userstory title: {title}, Userstory description: {description}, Acceptance criteria: {acceptance_criteria}"
     system_prompt = """You are an assistant that helps refine and break down user stories for agile development. 
